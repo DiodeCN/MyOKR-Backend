@@ -19,6 +19,13 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// 添加Spring Boot WebSocket 依赖
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+	// 添加Spring Boot Web 依赖，用于处理HTTP请求
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 }
 
 tasks.named('test') {
