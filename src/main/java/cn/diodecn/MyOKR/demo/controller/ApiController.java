@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 
 @RestController
+@CrossOrigin
 public class ApiController {
 
     @GetMapping("/api/connect")
