@@ -95,7 +95,7 @@ public class FileStorageService {
         try {
             FileStorageService fileStorageService = new FileStorageService();
             String fileName = fileStorageService.storeFile(file);
-            return ResponseEntity.ok("文件上传成功: " + fileName);
+            return ResponseEntity.ok("文件上传成功：" + fileName);
         } catch (RuntimeException ex) {
             // 检查异常类型并返回相应的状态码
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("无法存储文件，创建目录失败");

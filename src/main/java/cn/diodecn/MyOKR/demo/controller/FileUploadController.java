@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 @RestController
 @CrossOrigin
 public class FileUploadController {
@@ -18,9 +17,10 @@ public class FileUploadController {
     public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
         try {
             String fileName = fileStorageService.storeFile(file);
-            return ResponseEntity.ok("文件上传成功: " + fileName);
+            return new ResponseEntity<>("上传成功：" + fileName , HttpStatus.OK);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("上传失败");
         }
     }
 }
+
