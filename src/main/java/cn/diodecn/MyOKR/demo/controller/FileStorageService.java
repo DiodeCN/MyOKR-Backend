@@ -1,12 +1,12 @@
 package cn.diodecn.MyOKR.demo.controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Formatter;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 @Service
 public class FileStorageService {
@@ -34,50 +35,26 @@ public class FileStorageService {
         }
     }
 
+    public String storeFile(MultipartFile file) throws IOException, NoSuchAlgorithmException {
+        // 首先，生成文件的哈希值
+        String hash = sha1Hash(file.getBytes());
+        String fileExtension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+        String hashedFileName = hash + (fileExtension != null ? "." + fileExtension : "");
 
-    public String storeFile(MultipartFile file) {
-        String originalFileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
-        String fileName = createUniqueFileName(originalFileName);
+        Path targetLocation = this.fileStorageLocation.resolve(hashedFileName);
 
-        try {
-            Path targetLocation = this.fileStorageLocation.resolve(fileName);
+        // 检查文件是否已存在
+        if (!Files.exists(targetLocation)) {
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-            return fileName;
-        } catch (IOException ex) {
-            throw new RuntimeException("无法存储文件 " + fileName + "。请再试一次！", ex);
         }
+
+        return hashedFileName;
     }
 
-    private String createUniqueFileName(String originalFileName) {
-        // 提取文件扩展名，包括点号
-        String fileExtension = "";
-        int i = originalFileName.lastIndexOf('.');
-        if (i > 0) {
-            fileExtension = originalFileName.substring(i); // 包含点号
-        }
-
-        // 如果文件名没有扩展名，就在这里处理
-        if (fileExtension.isEmpty()) {
-            // 处理没有扩展名的情况（如果需要）
-            // 比如，你可以设置一个默认的扩展名或者其他逻辑
-        }
-
-        String baseName = originalFileName.substring(0, i >= 0 ? i : originalFileName.length());
-
-        String dateString = new SimpleDateFormat("yyyyMMdd").format(new Date());
-        String hash = sha1Hash(baseName);
-
-        return dateString + "_" + hash + fileExtension; // 确保扩展名被包含
-    }
-
-
-    private String sha1Hash(String input) {
-        try {
-            MessageDigest sha1 = MessageDigest.getInstance("SHA1");
-            return byteArray2Hex(sha1.digest(input.getBytes()));
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("无法生成文件哈希", e);
-        }
+    private String sha1Hash(byte[] input) throws NoSuchAlgorithmException {
+        MessageDigest sha1 = MessageDigest.getInstance("SHA1");
+        byte[] result = sha1.digest(input);
+        return byteArray2Hex(result);
     }
 
     private String byteArray2Hex(final byte[] hash) {
@@ -93,16 +70,14 @@ public class FileStorageService {
     @PostMapping("/upload")
     public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
         try {
-            FileStorageService fileStorageService = new FileStorageService();
-            String fileName = fileStorageService.storeFile(file);
+            String fileName = storeFile(file);
             return ResponseEntity.ok("文件上传成功：" + fileName);
+        } catch (IOException ex) {
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("无法存储文件。请再试一次！");
+        } catch (NoSuchAlgorithmException ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("生成文件哈希失败");
         } catch (RuntimeException ex) {
-            // 检查异常类型并返回相应的状态码
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("无法存储文件，创建目录失败");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("上传失败");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("上传失败：" + ex.getMessage());
         }
     }
-
-
 }

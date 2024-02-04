@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 public class ApiController {
 
     @GetMapping("/api/connect")
-    @CrossOrigin(origins = "http://localhost:5173") // 允许来自特定源的跨域请求
+    @CrossOrigin(origins = "*") // 允许来自特定源的跨域请求
     public String connect() {
         return "连接成功";
     }
